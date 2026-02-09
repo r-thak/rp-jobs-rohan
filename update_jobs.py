@@ -138,7 +138,7 @@ def fetch_logo_for_job(company_name: str) -> str | None:
             if og_image and og_image.get("content"):
                 return og_image["content"]
     except Exception as e:
-        logger.debug("Could not fetch logo for %s from %s: %s", company_name, tenant_url, e)
+        logger.warning("Could not fetch logo for %s from %s: %s", company_name, tenant_url, e)
 
     return None
 
@@ -479,6 +479,18 @@ def main() -> None:
                     job["discovered_date"] = existing_job["discovered_date"]
                 if existing_job.get("logo_url") and not job.get("logo_url"):
                     job["logo_url"] = existing_job["logo_url"]
+
+    # Retry fetching logos for any jobs still missing one
+    logo_cache: dict[str, str | None] = {}
+    missing_logo_jobs = [j for j in current_jobs if not j.get("logo_url")]
+    if missing_logo_jobs:
+        logger.info("Retrying logo fetch for %d jobs...", len(missing_logo_jobs))
+        for job in missing_logo_jobs:
+            company = job["company"]
+            if company not in logo_cache:
+                logo_cache[company] = fetch_logo_for_job(company)
+            if logo_cache[company]:
+                job["logo_url"] = logo_cache[company]
 
     new_jobs = find_new_jobs(current_jobs, existing_jobs)
 

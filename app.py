@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 import requests
 from flask import Flask, jsonify, render_template, request
 
-from database import add_subscriber, init_db, remove_subscriber
+from database import add_subscriber, get_active_subscribers, init_db, remove_subscriber
 
 logging.basicConfig(
     level=logging.INFO,
@@ -118,12 +118,14 @@ def subscribe():
 
     result = add_subscriber(email)
     if result["success"] and result["message"] != "Already subscribed!":
-        send_welcome_email(email)
+        send_welcome_email(email, result.get("token", ""))
+    # Don't expose token to client
+    response = {"success": result["success"], "message": result["message"]}
     status_code = 200 if result["success"] else 500
-    return jsonify(result), status_code
+    return jsonify(response), status_code
 
 
-def send_welcome_email(recipient: str) -> None:
+def send_welcome_email(recipient: str, token: str) -> None:
     """Send a welcome email to a new subscriber."""
     sender = os.environ.get("EMAIL_SENDER")
     password = os.environ.get("EMAIL_PASSWORD")
@@ -132,6 +134,8 @@ def send_welcome_email(recipient: str) -> None:
     if not sender or not password:
         return
 
+    unsubscribe_url = f"{app_url}/unsubscribe?token={token}" if app_url and token else ""
+
     html = f"""
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -139,8 +143,8 @@ def send_welcome_email(recipient: str) -> None:
         <p>You're now subscribed to receive notifications when new jobs are posted at the UIUC Research Park.</p>
         <p>You'll get an email whenever new positions are detected (we check every 15 minutes during business hours).</p>
         <p><a href="{app_url}" style="display: inline-block; background-color: #13294b; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">View the Job Board</a></p>
-        <p style="color: #666; font-size: 12px; margin-top: 30px;">
-          If you didn't sign up for this, you can ignore this email or unsubscribe via the link in any future notification.
+        <p style="color: #999; font-size: 11px; margin-top: 30px;">
+          <a href="{unsubscribe_url}" style="color: #999;">Unsubscribe from these notifications</a>
         </p>
       </body>
     </html>
@@ -207,38 +211,38 @@ def test_notification():
             {job['position']}
           </li>
         """
-    html += f"""
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            for sub in subscribers:
+                unsubscribe_url = f"{app_url}/unsubscribe?token={sub['unsubscribe_token']}" if app_url else ""
+                body = html + f"""
         </ul>
         <p><a href="{app_url}" style="display: inline-block; background-color: #13294b; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">View the Job Board</a></p>
         <p style="color: #666; font-size: 12px; margin-top: 30px;">
           This is a <strong>test notification</strong> from your Research Park Job Monitor.
         </p>
+        <p style="color: #999; font-size: 11px;">
+          <a href="{unsubscribe_url}" style="color: #999;">Unsubscribe from these notifications</a>
+        </p>
       </body>
     </html>
     """
-
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, password)
-            for sub in subscribers:
-                unsubscribe_url = f"{app_url}/unsubscribe?token={sub['unsubscribe_token']}" if app_url else None
                 msg = MIMEMultipart()
                 msg["From"] = sender
                 msg["To"] = sub["email"]
                 msg["Subject"] = subject
-                body = html
-                if unsubscribe_url:
-                    body += f"""
-        <p style="color: #999; font-size: 11px;">
-          <a href="{unsubscribe_url}" style="color: #999;">Unsubscribe from these notifications</a>
-        </p>
-    """
-                body += "</body></html>"
                 msg.attach(MIMEText(body, "html"))
                 server.send_message(msg)
         return jsonify({"success": True, "message": f"Test notification sent to {len(subscribers)} subscriber(s)"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/stats")
+def stats():
+    subscribers = get_active_subscribers()
+    return jsonify({"subscribers": len(subscribers)})
 
 
 @app.route("/health")

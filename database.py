@@ -70,7 +70,7 @@ def add_subscriber(email: str) -> dict:
                         (email, token),
                     )
             conn.commit()
-        return {"success": True, "message": "Successfully subscribed!"}
+        return {"success": True, "message": "Successfully subscribed!", "token": token}
     except Exception as e:
         logger.error("Failed to add subscriber %s: %s", email, e)
         return {"success": False, "message": "Failed to subscribe. Please try again."}

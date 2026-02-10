@@ -175,9 +175,23 @@ def unsubscribe():
     return render_template("unsubscribed.html", success=success)
 
 
+def require_admin():
+    """Check for admin key in Authorization header."""
+    admin_key = os.environ.get("ADMIN_KEY")
+    if not admin_key:
+        return jsonify({"success": False, "message": "ADMIN_KEY not configured"}), 500
+    provided = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if provided != admin_key:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    return None
+
+
 @app.route("/api/test-notification", methods=["POST"])
 def test_notification():
     """Send a fake job notification to all subscribers for testing."""
+    auth_error = require_admin()
+    if auth_error:
+        return auth_error
     sender = os.environ.get("EMAIL_SENDER")
     password = os.environ.get("EMAIL_PASSWORD")
     app_url = os.environ.get("APP_URL", "").rstrip("/")
@@ -239,8 +253,31 @@ def test_notification():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route("/api/remove-subscriber", methods=["POST"])
+def admin_remove_subscriber():
+    auth_error = require_admin()
+    if auth_error:
+        return auth_error
+    data = request.get_json()
+    if not data or not data.get("email"):
+        return jsonify({"success": False, "message": "Email is required"}), 400
+    from database import get_connection
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM subscribers WHERE email = %s", (data["email"],))
+                deleted = cur.rowcount > 0
+            conn.commit()
+        return jsonify({"success": deleted, "message": "Removed" if deleted else "Not found"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route("/api/stats")
 def stats():
+    auth_error = require_admin()
+    if auth_error:
+        return auth_error
     subscribers = get_active_subscribers()
     return jsonify({"subscribers": len(subscribers)})
 

@@ -1,8 +1,12 @@
 """Flask web app for the UIUC Research Park Job Board."""
 
 import logging
+import os
 import re
+import smtplib
 import time
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import requests
 from flask import Flask, jsonify, render_template, request
@@ -99,8 +103,49 @@ def subscribe():
         return jsonify({"success": False, "message": "Invalid email address"}), 400
 
     result = add_subscriber(email)
+    if result["success"] and result["message"] != "Already subscribed!":
+        send_welcome_email(email)
     status_code = 200 if result["success"] else 500
     return jsonify(result), status_code
+
+
+def send_welcome_email(recipient: str) -> None:
+    """Send a welcome email to a new subscriber."""
+    sender = os.environ.get("EMAIL_SENDER")
+    password = os.environ.get("EMAIL_PASSWORD")
+    app_url = os.environ.get("APP_URL", "").rstrip("/")
+
+    if not sender or not password:
+        return
+
+    html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2 style="color: #13294b;">Welcome to Research Park Job Alerts!</h2>
+        <p>You're now subscribed to receive notifications when new jobs are posted at the
+        <a href="https://researchpark.illinois.edu/work-here/careers/" style="color: #13294b;">UIUC Research Park</a>.</p>
+        <p>You'll get an email whenever new positions are detected (we check every 15 minutes during business hours).</p>
+        <p><a href="{app_url}" style="color: #13294b;">View the job board</a></p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+          If you didn't sign up for this, you can ignore this email or unsubscribe via the link in any future notification.
+        </p>
+      </body>
+    </html>
+    """
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = sender
+        msg["To"] = recipient
+        msg["Subject"] = "Welcome to Research Park Job Alerts"
+        msg.attach(MIMEText(html, "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            server.send_message(msg)
+        logger.info("Welcome email sent to %s", recipient)
+    except Exception as e:
+        logger.error("Failed to send welcome email to %s: %s", recipient, e)
 
 
 @app.route("/unsubscribe")

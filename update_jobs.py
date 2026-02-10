@@ -352,7 +352,7 @@ def extract_badges(job: dict) -> dict | None:
             '  "visa_sponsorship": true | false | null,\n'
             '  "cpt_opt_required": true | false,\n'
             '  "uiuc_only": true | false,\n'
-            '  "graduation_window": "Juniors/Seniors" | null,\n'
+            '  "class_years": ["Freshman", "Sophomore", "Junior", "Senior"] | [],\n'
             '  "majors": ["Computer Science", "Electrical Engineering"] | [],\n'
             '  "job_type": "internship" | "full-time" | "part-time",\n'
             '  "work_mode": "in-person" | "remote" | "hybrid" | null,\n'
@@ -367,7 +367,7 @@ def extract_badges(job: dict) -> dict | None:
             "- work_mode: null if not mentioned\n"
             "- duration: specific term like 'Summer 2026', null if not mentioned\n"
             "- min_gpa: string like '3.0', null if not mentioned\n"
-            "- graduation_window: use class year labels like 'Freshmen/Sophomores', 'Juniors/Seniors', 'Seniors', etc. null if not mentioned"
+            "- class_years: list each eligible class year separately (Freshman, Sophomore, Junior, Senior). Empty list if not specified"
         )
 
         message = client.messages.create(
@@ -427,10 +427,9 @@ def badge_html(job: dict) -> str:
             f'<span style="{style_base}background:#fef3c7;color:#92400e;">GPA {gpa}+</span>'
         )
 
-    grad_window = badges.get("graduation_window")
-    if grad_window:
+    for year in badges.get("class_years", []):
         pills.append(
-            f'<span style="{style_base}background:#e0f2fe;color:#075985;">{grad_window}</span>'
+            f'<span style="{style_base}background:#e0f2fe;color:#075985;">{year}</span>'
         )
 
     if badges.get("cpt_opt_required"):

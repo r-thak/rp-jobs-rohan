@@ -138,6 +138,14 @@ def parse_job_board() -> list[dict]:
                 "posted_date": entry.get("published", ""),
                 "published_parsed": entry.get("published_parsed"),
             }
+
+            # Capture description HTML for badge extraction (stripped before saving)
+            content_list = entry.get("content", [])
+            if content_list:
+                job["_description_html"] = content_list[0].get("value", "")
+            else:
+                job["_description_html"] = entry.get("summary", "")
+
             page_jobs.append(job)
 
         if not page_jobs:
@@ -314,6 +322,158 @@ def update_readme(jobs: list[dict]) -> None:
         f.write(readme_content)
 
 
+_anthropic_key_warned = False
+
+
+def extract_badges(job: dict) -> dict | None:
+    """Use Claude API to extract structured badges from job description HTML."""
+    global _anthropic_key_warned
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        if not _anthropic_key_warned:
+            logger.warning("ANTHROPIC_API_KEY not set — skipping badge extraction")
+            _anthropic_key_warned = True
+        return None
+
+    description = job.get("_description_html", "")
+    if not description:
+        return None
+
+    try:
+        import anthropic
+
+        client = anthropic.Anthropic(api_key=api_key)
+
+        system_prompt = (
+            "You extract structured metadata from job listing HTML. "
+            "Return ONLY valid JSON with this exact schema (no markdown, no explanation):\n"
+            "{\n"
+            '  "min_gpa": "3.0" | null,\n'
+            '  "visa_sponsorship": true | false | null,\n'
+            '  "cpt_opt_required": true | false,\n'
+            '  "uiuc_only": true | false,\n'
+            '  "graduation_window": "1-3 years" | null,\n'
+            '  "majors": ["CS", "ECE"] | [],\n'
+            '  "job_type": "internship" | "full-time" | "part-time",\n'
+            '  "work_mode": "in-person" | "remote" | "hybrid" | null,\n'
+            '  "duration": "Summer 2026" | null\n'
+            "}\n"
+            "Rules:\n"
+            "- visa_sponsorship: true if they sponsor, false if they explicitly don't, null if not mentioned\n"
+            "- cpt_opt_required: true only if CPT or OPT is explicitly mentioned as required\n"
+            "- uiuc_only: true only if restricted to UIUC students\n"
+            "- majors: use short abbreviations (CS, ECE, ME, etc). Empty list if not specified\n"
+            "- job_type: infer from title and description\n"
+            "- work_mode: null if not mentioned\n"
+            "- duration: specific term like 'Summer 2026', null if not mentioned\n"
+            "- min_gpa: string like '3.0', null if not mentioned"
+        )
+
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=512,
+            system=system_prompt,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"Job title: {job.get('position', '')}\n"
+                        f"Company: {job.get('company', '')}\n\n"
+                        f"Description HTML:\n{description[:8000]}"
+                    ),
+                }
+            ],
+        )
+
+        raw = message.content[0].text.strip()
+        # Strip markdown code fences if the model wraps the JSON
+        if raw.startswith("```"):
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+        badges = json.loads(raw)
+        logger.info("Extracted badges for %s: %s", job.get("position", ""), badges)
+        return badges
+    except json.JSONDecodeError as e:
+        logger.error("Failed to parse badge JSON for %s: %s", job.get("position", ""), e)
+        return None
+    except Exception as e:
+        logger.error("Badge extraction failed for %s: %s", job.get("position", ""), e)
+        return None
+
+
+def badge_html(job: dict) -> str:
+    """Generate inline-styled HTML badge pills for email notifications."""
+    badges = job.get("badges")
+    if not badges:
+        return ""
+
+    pills = []
+    style_base = (
+        "display:inline-block;padding:2px 8px;border-radius:12px;"
+        "font-size:11px;font-weight:600;margin:2px;"
+    )
+
+    job_type = badges.get("job_type")
+    if job_type:
+        label = job_type.capitalize()
+        pills.append(
+            f'<span style="{style_base}background:#dbeafe;color:#1e40af;">{label}</span>'
+        )
+
+    gpa = badges.get("min_gpa")
+    if gpa:
+        pills.append(
+            f'<span style="{style_base}background:#fef3c7;color:#92400e;">GPA {gpa}+</span>'
+        )
+
+    sponsorship = badges.get("visa_sponsorship")
+    if sponsorship is True:
+        pills.append(
+            f'<span style="{style_base}background:#d1fae5;color:#065f46;">Sponsors Visa</span>'
+        )
+    elif sponsorship is False:
+        pills.append(
+            f'<span style="{style_base}background:#fee2e2;color:#991b1b;">No Visa Sponsorship</span>'
+        )
+
+    grad_window = badges.get("graduation_window")
+    if grad_window:
+        pills.append(
+            f'<span style="{style_base}background:#e0f2fe;color:#075985;">Grad {grad_window}</span>'
+        )
+
+    if badges.get("cpt_opt_required"):
+        pills.append(
+            f'<span style="{style_base}background:#fce7f3;color:#9d174d;">CPT/OPT Required</span>'
+        )
+
+    work_mode = badges.get("work_mode")
+    if work_mode:
+        label = work_mode.capitalize()
+        pills.append(
+            f'<span style="{style_base}background:#f3e8ff;color:#6b21a8;">{label}</span>'
+        )
+
+    duration = badges.get("duration")
+    if duration:
+        pills.append(
+            f'<span style="{style_base}background:#dcfce7;color:#166534;">{duration}</span>'
+        )
+
+    majors = badges.get("majors", [])
+    if majors:
+        majors_str = ", ".join(majors[:5])
+        if len(majors) > 5:
+            majors_str += f" +{len(majors) - 5}"
+        pills.append(
+            f'<span style="{style_base}background:#f3f4f6;color:#374151;">{majors_str}</span>'
+        )
+
+    if not pills:
+        return ""
+    return '<div style="margin-top:4px;">' + "".join(pills) + "</div>"
+
+
 def send_email(new_jobs: list[dict]) -> None:
     """Send email notification for new jobs using SMTP."""
     sender_email = os.environ.get("EMAIL_SENDER")
@@ -360,10 +520,12 @@ def send_email(new_jobs: list[dict]) -> None:
         <ul style="list-style-type: none; padding: 0;">
     """
         for job in jobs_list:
+            badges_markup = badge_html(job)
             html += f"""
           <li style="margin-bottom: 15px; border-left: 4px solid #E84A27; padding-left: 10px;">
             <strong>{job['company']}</strong><br>
             {job['position']}
+            {badges_markup}
           </li>
         """
         html += f"""
@@ -453,8 +615,26 @@ def main() -> None:
             if existing_job:
                 if "discovered_date" in existing_job:
                     job["discovered_date"] = existing_job["discovered_date"]
+                if "badges" in existing_job:
+                    job["badges"] = existing_job["badges"]
 
     new_jobs = find_new_jobs(current_jobs, existing_jobs)
+
+    # Extract badges for new jobs
+    for job in new_jobs:
+        if "badges" not in job:
+            badges = extract_badges(job)
+            if badges:
+                job["badges"] = badges
+
+    # Backfill badges for existing jobs that don't have them yet
+    untagged = [j for j in current_jobs if "badges" not in j and j.get("_description_html")]
+    if untagged:
+        logger.info("Backfilling badges for %d untagged job(s)...", len(untagged))
+        for job in untagged:
+            badges = extract_badges(job)
+            if badges:
+                job["badges"] = badges
 
     if new_jobs:
         logger.info("%d new job(s) detected:", len(new_jobs))
@@ -463,11 +643,20 @@ def main() -> None:
 
         send_email(new_jobs)
 
+        # Strip temp field before writing
+        serializable_new = [
+            {k: v for k, v in job.items() if k != "_description_html"}
+            for job in new_jobs
+        ]
         with open("new_jobs.json", "w") as f:
-            json.dump(new_jobs, f, indent=2)
+            json.dump(serializable_new, f, indent=2)
     else:
         logger.info("No new jobs (scanned %d listings)", len(current_jobs))
         Path("new_jobs.json").touch()
+
+    # Strip temporary description HTML before saving
+    for job in current_jobs:
+        job.pop("_description_html", None)
 
     update_readme(current_jobs)
     save_jobs(current_jobs)

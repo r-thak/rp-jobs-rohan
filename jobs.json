@@ -16,7 +16,18 @@
       40,
       0
     ],
-    "discovered_date": "2026-02-10T00:01:40.903494"
+    "discovered_date": "2026-02-09T19:46:23.009373",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": false,
+      "cpt_opt_required": true,
+      "uiuc_only": true,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "internship",
+      "work_mode": "in-person",
+      "duration": "Summer 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47829",
@@ -35,7 +46,18 @@
       35,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215076"
+    "discovered_date": "2026-02-09T19:46:23.009380",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "part-time",
+      "work_mode": "hybrid",
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47811",
@@ -54,7 +76,21 @@
       28,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215081"
+    "discovered_date": "2026-02-09T19:46:23.009382",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": true,
+      "graduation_window": "1-3 years",
+      "majors": [
+        "CS",
+        "ECE"
+      ],
+      "job_type": "internship",
+      "work_mode": "in-person",
+      "duration": "Summer 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47810",
@@ -73,7 +109,23 @@
       28,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215083"
+    "discovered_date": "2026-02-09T19:46:23.009383",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": true,
+      "graduation_window": "1-3 years",
+      "majors": [
+        "CS",
+        "CIS",
+        "ECE",
+        "ME"
+      ],
+      "job_type": "internship",
+      "work_mode": "in-person",
+      "duration": "Summer 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47806",
@@ -92,7 +144,22 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215084"
+    "discovered_date": "2026-02-09T19:46:23.009385",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "Biology",
+        "Chemistry",
+        "ChemE"
+      ],
+      "job_type": "part-time",
+      "work_mode": "in-person",
+      "duration": "6 months"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47805",
@@ -111,7 +178,18 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215085"
+    "discovered_date": "2026-02-09T19:46:23.009386",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "internship",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47804",
@@ -130,7 +208,18 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215086"
+    "discovered_date": "2026-02-09T19:46:23.009387",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47801",
@@ -149,7 +238,18 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215087"
+    "discovered_date": "2026-02-09T19:46:23.009388",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "internship",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47803",
@@ -168,7 +268,20 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215091"
+    "discovered_date": "2026-02-09T19:46:23.009389",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CS"
+      ],
+      "job_type": "internship",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47802",
@@ -187,7 +300,20 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215092"
+    "discovered_date": "2026-02-09T19:46:23.009390",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CS"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47800",
@@ -206,7 +332,18 @@
       23,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215093"
+    "discovered_date": "2026-02-09T19:46:23.009392",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47534",
@@ -225,7 +362,21 @@
       20,
       0
     ],
-    "discovered_date": "2025-12-02T18:37:09.122883"
+    "discovered_date": "2026-02-09T19:46:23.009393",
+    "badges": {
+      "min_gpa": "2.8",
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": "1-3 years",
+      "majors": [
+        "CS",
+        "MIS"
+      ],
+      "job_type": "part-time",
+      "work_mode": "in-person",
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47754",
@@ -244,7 +395,18 @@
       16,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215096"
+    "discovered_date": "2026-02-09T19:46:23.009394",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=46395",
@@ -263,7 +425,22 @@
       12,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215097"
+    "discovered_date": "2026-02-09T19:46:23.009396",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "ME",
+        "CE",
+        "ChE"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47207",
@@ -282,7 +459,22 @@
       9,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215098"
+    "discovered_date": "2026-02-09T19:46:23.009397",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "BE",
+        "CE",
+        "ChE"
+      ],
+      "job_type": "part-time",
+      "work_mode": "in-person",
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47736",
@@ -301,7 +493,22 @@
       9,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215099"
+    "discovered_date": "2026-02-09T19:46:23.009398",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": "Spring 2026",
+      "majors": [
+        "EE",
+        "ME",
+        "IE"
+      ],
+      "job_type": "full-time",
+      "work_mode": "in-person",
+      "duration": "24 months"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47726",
@@ -320,7 +527,18 @@
       8,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215100"
+    "discovered_date": "2026-02-09T19:46:23.009399",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47721",
@@ -339,7 +557,21 @@
       7,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215101"
+    "discovered_date": "2026-02-09T19:46:23.009400",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": true,
+      "graduation_window": null,
+      "majors": [
+        "EE",
+        "ME"
+      ],
+      "job_type": "internship",
+      "work_mode": null,
+      "duration": "Winter 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47671",
@@ -358,7 +590,18 @@
       351,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215102"
+    "discovered_date": "2026-02-09T19:46:23.009402",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": true,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "internship",
+      "work_mode": "in-person",
+      "duration": "Summer 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47673",
@@ -377,7 +620,18 @@
       351,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215104"
+    "discovered_date": "2026-02-09T19:46:23.009403",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": true,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "internship",
+      "work_mode": "in-person",
+      "duration": "Summer 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47672",
@@ -396,7 +650,21 @@
       351,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215105"
+    "discovered_date": "2026-02-09T19:46:23.009404",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": true,
+      "graduation_window": null,
+      "majors": [
+        "CS",
+        "ECE"
+      ],
+      "job_type": "internship",
+      "work_mode": "in-person",
+      "duration": "Summer 2026"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47668",
@@ -415,7 +683,21 @@
       351,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215106"
+    "discovered_date": "2026-02-09T19:46:23.009405",
+    "badges": {
+      "min_gpa": "3.0",
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "ECE",
+        "EE"
+      ],
+      "job_type": "internship",
+      "work_mode": null,
+      "duration": "Summer"
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47664",
@@ -434,7 +716,22 @@
       350,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215106"
+    "discovered_date": "2026-02-09T19:46:23.009406",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CS",
+        "ECE",
+        "CE"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47663",
@@ -453,7 +750,21 @@
       350,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215107"
+    "discovered_date": "2026-02-09T19:46:23.009407",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CS",
+        "ECE"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47662",
@@ -472,7 +783,21 @@
       350,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215108"
+    "discovered_date": "2026-02-09T19:46:23.009408",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CS",
+        "CE"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47661",
@@ -491,7 +816,20 @@
       350,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215109"
+    "discovered_date": "2026-02-09T19:46:23.009410",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CS"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47658",
@@ -510,7 +848,20 @@
       350,
       0
     ],
-    "discovered_date": "2026-02-09T23:11:26.215110"
+    "discovered_date": "2026-02-09T19:46:23.009411",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": false,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [
+        "CE"
+      ],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   },
   {
     "id": "https://researchpark.illinois.edu/?post_type=job_listing&p=47015",
@@ -529,6 +880,17 @@
       268,
       0
     ],
-    "discovered_date": "2025-11-05T15:47:32.599128"
+    "discovered_date": "2026-02-09T19:46:23.009412",
+    "badges": {
+      "min_gpa": null,
+      "visa_sponsorship": null,
+      "cpt_opt_required": false,
+      "uiuc_only": false,
+      "graduation_window": null,
+      "majors": [],
+      "job_type": "full-time",
+      "work_mode": null,
+      "duration": null
+    }
   }
 ]

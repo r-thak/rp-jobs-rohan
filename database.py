@@ -45,6 +45,16 @@ def init_db() -> None:
                 ALTER TABLE subscribers
                 ADD COLUMN IF NOT EXISTS preference TEXT DEFAULT 'both'
             """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS stats_snapshots (
+                    id SERIAL PRIMARY KEY,
+                    recorded_at TIMESTAMP DEFAULT NOW(),
+                    jobs_on_board INTEGER NOT NULL,
+                    new_jobs_found INTEGER NOT NULL,
+                    active_subscribers INTEGER NOT NULL,
+                    total_jobs_ever INTEGER NOT NULL
+                )
+            """)
         conn.commit()
     logger.info("Database initialized")
 
@@ -126,3 +136,60 @@ def is_subscribed(email: str) -> bool:
     except Exception as e:
         logger.error("Failed to check subscription for %s: %s", email, e)
         return False
+
+
+def record_stats_snapshot(jobs_on_board: int, new_jobs_found: int, active_subscribers: int) -> bool:
+    """Record a stats snapshot. Computes total_jobs_ever from previous snapshot. Non-fatal on error."""
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT total_jobs_ever FROM stats_snapshots ORDER BY id DESC LIMIT 1"
+                )
+                row = cur.fetchone()
+                if row is not None:
+                    total_jobs_ever = row[0] + new_jobs_found
+                else:
+                    # First snapshot ever — seed with current board count
+                    total_jobs_ever = jobs_on_board
+
+                cur.execute(
+                    """INSERT INTO stats_snapshots
+                       (jobs_on_board, new_jobs_found, active_subscribers, total_jobs_ever)
+                       VALUES (%s, %s, %s, %s)""",
+                    (jobs_on_board, new_jobs_found, active_subscribers, total_jobs_ever),
+                )
+            conn.commit()
+        logger.info(
+            "Stats snapshot recorded: board=%d new=%d subs=%d total_ever=%d",
+            jobs_on_board, new_jobs_found, active_subscribers, total_jobs_ever,
+        )
+        return True
+    except Exception as e:
+        logger.error("Failed to record stats snapshot: %s", e)
+        return False
+
+
+def get_stats_history(limit: int = 500) -> list[dict]:
+    """Return recent stats snapshots as list of dicts, newest first."""
+    try:
+        with get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT id, recorded_at, jobs_on_board, new_jobs_found, "
+                    "active_subscribers, total_jobs_ever "
+                    "FROM stats_snapshots ORDER BY id DESC LIMIT %s",
+                    (limit,),
+                )
+                rows = cur.fetchall()
+                # Convert to plain dicts and make recorded_at JSON-serializable
+                result = []
+                for row in rows:
+                    d = dict(row)
+                    if d.get("recorded_at"):
+                        d["recorded_at"] = d["recorded_at"].isoformat()
+                    result.append(d)
+                return result
+    except Exception as e:
+        logger.error("Failed to get stats history: %s", e)
+        return []

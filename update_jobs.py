@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 
 import feedparser
 
-from database import get_active_subscribers, init_db
+from database import get_active_subscribers, init_db, record_stats_snapshot
 
 logging.basicConfig(
     level=logging.INFO,
@@ -471,6 +471,10 @@ def main() -> None:
 
     update_readme(current_jobs)
     save_jobs(current_jobs)
+
+    subscriber_count = len(get_active_subscribers())
+    record_stats_snapshot(len(current_jobs), len(new_jobs), subscriber_count)
+
     logger.info("=" * 60)
     logger.info("Update complete!")
     logger.info("=" * 60)

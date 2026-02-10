@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 import requests
 from flask import Flask, jsonify, render_template, request
 
-from database import add_subscriber, get_active_subscribers, init_db, remove_subscriber
+from database import add_subscriber, get_active_subscribers, get_stats_history, init_db, remove_subscriber
 
 logging.basicConfig(
     level=logging.INFO,
@@ -286,7 +286,47 @@ def stats():
     if auth_error:
         return auth_error
     subscribers = get_active_subscribers()
-    return jsonify({"subscribers": len(subscribers)})
+    history = get_stats_history()
+
+    current_subscribers = len(subscribers)
+    latest = history[0] if history else {}
+    current_jobs_on_board = latest.get("jobs_on_board", 0)
+    total_jobs_ever = latest.get("total_jobs_ever", 0)
+    peak_subscribers = max((s.get("active_subscribers", 0) for s in history), default=0)
+
+    return jsonify({
+        "subscribers": current_subscribers,
+        "summary": {
+            "current_subscribers": current_subscribers,
+            "current_jobs_on_board": current_jobs_on_board,
+            "total_jobs_ever": total_jobs_ever,
+            "peak_subscribers": peak_subscribers,
+            "total_snapshots": len(history),
+        },
+        "history": history,
+    })
+
+
+@app.route("/stats")
+def stats_page():
+    history = get_stats_history()
+    current_subscribers = len(get_active_subscribers())
+    latest = history[0] if history else {}
+    current_jobs_on_board = latest.get("jobs_on_board", 0)
+    total_jobs_ever = latest.get("total_jobs_ever", 0)
+    peak_subscribers = max((s.get("active_subscribers", 0) for s in history), default=0)
+    total_snapshots = len(history)
+    first_snapshot = history[-1].get("recorded_at", "") if history else ""
+    return render_template(
+        "stats.html",
+        current_subscribers=current_subscribers,
+        current_jobs_on_board=current_jobs_on_board,
+        total_jobs_ever=total_jobs_ever,
+        peak_subscribers=peak_subscribers,
+        total_snapshots=total_snapshots,
+        first_snapshot=first_snapshot,
+        history=history,
+    )
 
 
 @app.route("/health")

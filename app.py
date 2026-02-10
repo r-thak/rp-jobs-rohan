@@ -17,20 +17,6 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-AVATAR_COLORS = [
-    "#E84A27", "#13294b", "#0F9D58", "#4285F4", "#DB4437",
-    "#F4B400", "#7B1FA2", "#00897B", "#C2185B", "#1565C0",
-]
-
-
-def avatar_color(company_name: str) -> str:
-    """Deterministic color from company name hash."""
-    h = sum(ord(c) for c in company_name)
-    return AVATAR_COLORS[h % len(AVATAR_COLORS)]
-
-
-app.jinja_env.filters["avatar_color"] = avatar_color
-
 JOBS_JSON_URL = (
     "https://raw.githubusercontent.com/pazatek/rp-jobs/main/jobs.json"
 )

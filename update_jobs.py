@@ -19,7 +19,6 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import feedparser
-from bs4 import BeautifulSoup
 
 from database import get_active_subscribers, init_db
 
@@ -46,8 +45,8 @@ Auto-updated job listings from the [University of Illinois Research Park](https:
 
 ---
 
-| Logo | Company | Position | Posted | Link |
-| :---: | ------- | -------- | ------ | ---- |
+| Company | Position | Posted | Link |
+| ------- | -------- | ------ | ---- |
 {job_table}
 
 {posting_stats}
@@ -116,43 +115,10 @@ def fetch_rss_page(page: int = 1) -> feedparser.FeedParserDict | None:
     return None
 
 
-def fetch_logo_for_job(company_name: str) -> str | None:
-    """
-    Fetch logo URL from the tenant directory page.
-
-    Slugifies company name to build the tenant directory URL,
-    then extracts the og:image meta tag.
-    """
-    tenant_slug = re.sub(r"[^a-z0-9]+", "-", company_name.lower()).strip("-")
-    tenant_url = f"https://researchpark.illinois.edu/tenant-directory/{tenant_slug}/"
-
-    try:
-        req = urllib.request.Request(
-            tenant_url, headers={"User-Agent": "Mozilla/5.0"}
-        )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            raw = response.read()
-            # Some pages return binary (e.g. JPEG redirect); try utf-8 then latin-1
-            try:
-                html = raw.decode("utf-8")
-            except UnicodeDecodeError:
-                html = raw.decode("latin-1")
-            soup = BeautifulSoup(html, "html.parser")
-
-            og_image = soup.find("meta", property="og:image")
-            if og_image and og_image.get("content"):
-                return og_image["content"]
-    except Exception as e:
-        logger.warning("Could not fetch logo for %s from %s: %s", company_name, tenant_url, e)
-
-    return None
-
-
 def parse_job_board() -> list[dict]:
     """Go through all the pages of the job board and collect all the jobs."""
     jobs = []
     page = 1
-    logo_cache: dict[str, str | None] = {}
 
     while page <= MAX_PAGES:
         feed = fetch_rss_page(page)
@@ -164,11 +130,6 @@ def parse_job_board() -> list[dict]:
             company = entry.get("job_listing_company", "N/A")
             job_id = entry.get("guid", entry.link)
 
-            # Fetch logo once per company
-            if company not in logo_cache:
-                logo_cache[company] = fetch_logo_for_job(company)
-            logo_url = logo_cache[company]
-
             job = {
                 "id": job_id,
                 "company": company,
@@ -176,7 +137,6 @@ def parse_job_board() -> list[dict]:
                 "link": entry.link,
                 "posted_date": entry.get("published", ""),
                 "published_parsed": entry.get("published_parsed"),
-                "logo_url": logo_url,
             }
             page_jobs.append(job)
 
@@ -198,14 +158,6 @@ def find_new_jobs(current_jobs: list[dict], existing_jobs: list[dict]) -> list[d
     """Figure out which jobs are new since last time we checked."""
     seen_ids = {job["id"] for job in existing_jobs}
     return [job for job in current_jobs if job["id"] not in seen_ids]
-
-
-def get_company_logo(job: dict) -> str:
-    """Return HTML for company logo in README."""
-    logo_url = job.get("logo_url", "")
-    if logo_url:
-        return f'<img src="{logo_url}" alt="{job["company"]}" width="50">'
-    return "???"
 
 
 def format_posted_date(posted_date_str: str, published_parsed: list | None = None) -> str:
@@ -338,10 +290,9 @@ def update_readme(jobs: list[dict]) -> None:
     for job in sorted_jobs:
         position = job["position"].replace("|", "-")
         company = job["company"].replace("|", "-")
-        logo = get_company_logo(job)
         posted = format_posted_date(job.get("posted_date", ""), job.get("published_parsed"))
         link = job["link"]
-        table_rows.append(f"| {logo} | {company} | {position} | {posted} | [Apply]({link}) |")
+        table_rows.append(f"| {company} | {position} | {posted} | [Apply]({link}) |")
 
     table_text = "\n".join(table_rows)
 
@@ -482,20 +433,6 @@ def main() -> None:
             if existing_job:
                 if "discovered_date" in existing_job:
                     job["discovered_date"] = existing_job["discovered_date"]
-                if existing_job.get("logo_url") and not job.get("logo_url"):
-                    job["logo_url"] = existing_job["logo_url"]
-
-    # Retry fetching logos for any jobs still missing one
-    logo_cache: dict[str, str | None] = {}
-    missing_logo_jobs = [j for j in current_jobs if not j.get("logo_url")]
-    if missing_logo_jobs:
-        logger.info("Retrying logo fetch for %d jobs...", len(missing_logo_jobs))
-        for job in missing_logo_jobs:
-            company = job["company"]
-            if company not in logo_cache:
-                logo_cache[company] = fetch_logo_for_job(company)
-            if logo_cache[company]:
-                job["logo_url"] = logo_cache[company]
 
     new_jobs = find_new_jobs(current_jobs, existing_jobs)
 

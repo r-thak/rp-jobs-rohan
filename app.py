@@ -14,7 +14,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from database import add_subscriber, get_active_subscribers, get_stats_history, init_db, remove_subscriber
+from database import add_subscriber, confirm_subscriber, get_active_subscribers, get_stats_history, init_db, remove_subscriber
 
 logging.basicConfig(
     level=logging.INFO,
@@ -140,16 +140,16 @@ def subscribe():
         preference = "both"
 
     result = add_subscriber(email, preference)
-    if result["success"] and result["message"] != "Already subscribed!":
-        send_welcome_email(email, result.get("token", ""), preference)
+    if result.get("needs_confirm") and result.get("token"):
+        send_confirmation_email(email, result["token"], preference)
     # Don't expose token to client
     response = {"success": result["success"], "message": result["message"]}
     status_code = 200 if result["success"] else 500
     return jsonify(response), status_code
 
 
-def send_welcome_email(recipient: str, token: str, preference: str = "both") -> None:
-    """Send a welcome email to a new subscriber."""
+def send_confirmation_email(recipient: str, token: str, preference: str = "both") -> None:
+    """Send a confirmation email to a new subscriber."""
     sender = os.environ.get("EMAIL_SENDER")
     password = os.environ.get("EMAIL_PASSWORD")
     app_url = os.environ.get("APP_URL", "").rstrip("/")
@@ -157,7 +157,7 @@ def send_welcome_email(recipient: str, token: str, preference: str = "both") -> 
     if not sender or not password:
         return
 
-    unsubscribe_url = f"{app_url}/unsubscribe?token={token}" if app_url and token else ""
+    confirm_url = f"{app_url}/confirm?token={token}" if app_url and token else ""
 
     pref_labels = {"internship": "internship", "fulltime": "full-time", "both": "all"}
     pref_text = pref_labels.get(preference, "all")
@@ -165,13 +165,11 @@ def send_welcome_email(recipient: str, token: str, preference: str = "both") -> 
     html = f"""
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2 style="color: #13294b;">Welcome to Research Park Job Alerts!</h2>
-        <p>You're now subscribed to receive notifications for <strong>{html_escape(pref_text)}</strong> job postings at the UIUC Research Park.</p>
-        <p>You'll get an email whenever new positions are detected (we check every 15 minutes during business hours).</p>
-        <p><a href="{html_escape(app_url)}" style="display: inline-block; background-color: #13294b; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">View the Job Board</a></p>
-        <p style="color: #999; font-size: 11px; margin-top: 30px;">
-          <a href="{html_escape(unsubscribe_url)}" style="color: #999;">Unsubscribe from these notifications</a>
-        </p>
+        <h2 style="color: #13294b;">Confirm Your Subscription</h2>
+        <p>You requested to receive notifications for <strong>{html_escape(pref_text)}</strong> job postings at the UIUC Research Park.</p>
+        <p>Click the button below to confirm your email address and start receiving alerts:</p>
+        <p><a href="{html_escape(confirm_url)}" style="display: inline-block; background-color: #E84A27; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Confirm Subscription</a></p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">If you didn't request this, you can safely ignore this email.</p>
       </body>
     </html>
     """
@@ -180,15 +178,25 @@ def send_welcome_email(recipient: str, token: str, preference: str = "both") -> 
         msg = MIMEMultipart()
         msg["From"] = sender
         msg["To"] = recipient
-        msg["Subject"] = "Welcome to Research Park Job Alerts"
+        msg["Subject"] = "Confirm your Research Park Job Alerts subscription"
         msg.attach(MIMEText(html, "html"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender, password)
             server.send_message(msg)
-        logger.info("Welcome email sent to %s", recipient)
+        logger.info("Confirmation email sent to %s", recipient)
     except Exception as e:
-        logger.error("Failed to send welcome email to %s: %s", recipient, e)
+        logger.error("Failed to send confirmation email to %s: %s", recipient, e)
+
+
+@app.route("/confirm")
+def confirm():
+    token = request.args.get("token", "")
+    if not token:
+        return render_template("confirmed.html", success=False), 400
+
+    success = confirm_subscriber(token)
+    return render_template("confirmed.html", success=success)
 
 
 @app.route("/unsubscribe")

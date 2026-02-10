@@ -46,6 +46,16 @@ def init_db() -> None:
                 ADD COLUMN IF NOT EXISTS preference TEXT DEFAULT 'both'
             """)
             cur.execute("""
+                ALTER TABLE subscribers
+                ADD COLUMN IF NOT EXISTS confirmed BOOLEAN DEFAULT FALSE
+            """)
+            # Grandfather existing active subscribers as confirmed
+            cur.execute("""
+                UPDATE subscribers SET confirmed = TRUE
+                WHERE active = TRUE AND confirmed = FALSE
+                AND subscribed_at < NOW() - INTERVAL '1 minute'
+            """)
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS stats_snapshots (
                     id SERIAL PRIMARY KEY,
                     recorded_at TIMESTAMP DEFAULT NOW(),
@@ -67,29 +77,54 @@ def add_subscriber(email: str, preference: str = "both") -> dict:
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                # Check if already subscribed and active
                 cur.execute(
-                    "SELECT active FROM subscribers WHERE email = %s", (email,)
+                    "SELECT active, confirmed FROM subscribers WHERE email = %s", (email,)
                 )
                 row = cur.fetchone()
                 if row:
-                    if row[0]:
+                    active, confirmed = row
+                    if active and confirmed:
                         return {"success": True, "message": "Already subscribed!"}
-                    # Reactivate
+                    if active and not confirmed:
+                        # Pending confirmation — regenerate token and resend
+                        cur.execute(
+                            "UPDATE subscribers SET unsubscribe_token = %s, preference = %s WHERE email = %s",
+                            (token, preference, email),
+                        )
+                        conn.commit()
+                        return {"success": True, "message": "Check your email to confirm your subscription.", "token": token, "needs_confirm": True}
+                    # Inactive (unsubscribed) — reactivate as unconfirmed
                     cur.execute(
-                        "UPDATE subscribers SET active = TRUE, unsubscribe_token = %s, preference = %s WHERE email = %s",
+                        "UPDATE subscribers SET active = TRUE, confirmed = FALSE, unsubscribe_token = %s, preference = %s WHERE email = %s",
                         (token, preference, email),
                     )
                 else:
                     cur.execute(
-                        "INSERT INTO subscribers (email, unsubscribe_token, preference) VALUES (%s, %s, %s)",
+                        "INSERT INTO subscribers (email, unsubscribe_token, preference, confirmed) VALUES (%s, %s, %s, FALSE)",
                         (email, token, preference),
                     )
             conn.commit()
-        return {"success": True, "message": "Successfully subscribed!", "token": token}
+        return {"success": True, "message": "Check your email to confirm your subscription.", "token": token, "needs_confirm": True}
     except Exception as e:
         logger.error("Failed to add subscriber %s: %s", email, e)
         return {"success": False, "message": "Failed to subscribe. Please try again."}
+
+
+def confirm_subscriber(token: str) -> bool:
+    """Set confirmed=TRUE where unsubscribe_token matches. Return success."""
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE subscribers SET confirmed = TRUE WHERE unsubscribe_token = %s AND active = TRUE AND confirmed = FALSE",
+                    (token,),
+                )
+                updated = cur.rowcount > 0
+            conn.commit()
+        return updated
+    except Exception as e:
+        logger.error("Failed to confirm subscriber with token %s: %s", token, e)
+        return False
 
 
 def remove_subscriber(token: str) -> bool:
@@ -110,12 +145,12 @@ def remove_subscriber(token: str) -> bool:
 
 
 def get_active_subscribers() -> list[dict]:
-    """Return list of {email, unsubscribe_token, preference} where active=TRUE."""
+    """Return list of {email, unsubscribe_token, preference} where active=TRUE and confirmed=TRUE."""
     try:
         with get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT email, unsubscribe_token, COALESCE(preference, 'both') AS preference FROM subscribers WHERE active = TRUE"
+                    "SELECT email, unsubscribe_token, COALESCE(preference, 'both') AS preference FROM subscribers WHERE active = TRUE AND confirmed = TRUE"
                 )
                 return [dict(row) for row in cur.fetchall()]
     except Exception as e:

@@ -11,7 +11,10 @@
     <div class="container mx-auto px-4 py-8 max-w-4xl">
         <header class="mb-8">
             <a href="/" class="text-sm text-[#13294b] hover:underline">&larr; Back to Job Board</a>
-            <h1 class="text-3xl font-bold text-[#13294b] mt-2">Internal Stats</h1>
+            <div class="flex items-center gap-3 mt-2">
+                <h1 class="text-3xl font-bold text-[#13294b]">Internal Stats</h1>
+                <button onclick="location.reload()" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition" title="Refresh">&#8635; Refresh</button>
+            </div>
             <p class="text-gray-500 text-sm mt-1">
                 Tracking since {{ first_snapshot[:10] if first_snapshot else 'N/A' }}
                 &middot; {{ total_snapshots }} snapshot{{ 's' if total_snapshots != 1 else '' }} recorded

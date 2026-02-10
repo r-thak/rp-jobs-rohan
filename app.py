@@ -279,8 +279,7 @@ def stats():
     if auth_error:
         return auth_error
     subscribers = get_active_subscribers()
-    app_url = os.environ.get("APP_URL", "NOT SET")
-    return jsonify({"subscribers": len(subscribers), "app_url": app_url})
+    return jsonify({"subscribers": len(subscribers)})
 
 
 @app.route("/health")

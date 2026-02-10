@@ -116,16 +116,20 @@ def subscribe():
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         return jsonify({"success": False, "message": "Invalid email address"}), 400
 
-    result = add_subscriber(email)
+    preference = data.get("preference", "both")
+    if preference not in ("internship", "fulltime", "both"):
+        preference = "both"
+
+    result = add_subscriber(email, preference)
     if result["success"] and result["message"] != "Already subscribed!":
-        send_welcome_email(email, result.get("token", ""))
+        send_welcome_email(email, result.get("token", ""), preference)
     # Don't expose token to client
     response = {"success": result["success"], "message": result["message"]}
     status_code = 200 if result["success"] else 500
     return jsonify(response), status_code
 
 
-def send_welcome_email(recipient: str, token: str) -> None:
+def send_welcome_email(recipient: str, token: str, preference: str = "both") -> None:
     """Send a welcome email to a new subscriber."""
     sender = os.environ.get("EMAIL_SENDER")
     password = os.environ.get("EMAIL_PASSWORD")
@@ -136,11 +140,14 @@ def send_welcome_email(recipient: str, token: str) -> None:
 
     unsubscribe_url = f"{app_url}/unsubscribe?token={token}" if app_url and token else ""
 
+    pref_labels = {"internship": "internship", "fulltime": "full-time", "both": "all"}
+    pref_text = pref_labels.get(preference, "all")
+
     html = f"""
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2 style="color: #13294b;">Welcome to Research Park Job Alerts!</h2>
-        <p>You're now subscribed to receive notifications when new jobs are posted at the UIUC Research Park.</p>
+        <p>You're now subscribed to receive notifications for <strong>{pref_text}</strong> job postings at the UIUC Research Park.</p>
         <p>You'll get an email whenever new positions are detected (we check every 15 minutes during business hours).</p>
         <p><a href="{app_url}" style="display: inline-block; background-color: #13294b; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">View the Job Board</a></p>
         <p style="color: #999; font-size: 11px; margin-top: 30px;">

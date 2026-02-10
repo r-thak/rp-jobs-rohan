@@ -338,15 +338,28 @@ def send_email(new_jobs: list[dict]) -> None:
     count = len(new_jobs)
     subject = f"\U0001f393 {count} New Research Park Job{'s' if count > 1 else ''} Found!"
 
-    def build_html(unsubscribe_link: str | None = None) -> str:
+    def is_internship(job: dict) -> bool:
+        return "intern" in job.get("position", "").lower()
+
+    def filter_jobs_by_preference(jobs: list[dict], preference: str) -> list[dict]:
+        if preference == "both":
+            return jobs
+        if preference == "internship":
+            return [j for j in jobs if is_internship(j)]
+        if preference == "fulltime":
+            return [j for j in jobs if not is_internship(j)]
+        return jobs
+
+    def build_html(jobs_list: list[dict], unsubscribe_link: str | None = None) -> str:
+        job_count = len(jobs_list)
         html = f"""
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2 style="color: #13294b;">New Job Posting{'s' if count > 1 else ''} at Research Park</h2>
-        <p>The following new position{'s were' if count > 1 else ' was'} just detected:</p>
+        <h2 style="color: #13294b;">New Job Posting{'s' if job_count > 1 else ''} at Research Park</h2>
+        <p>The following new position{'s were' if job_count > 1 else ' was'} just detected:</p>
         <ul style="list-style-type: none; padding: 0;">
     """
-        for job in new_jobs:
+        for job in jobs_list:
             html += f"""
           <li style="margin-bottom: 15px; border-left: 4px solid #E84A27; padding-left: 10px;">
             <strong>{job['company']}</strong><br>
@@ -377,33 +390,41 @@ def send_email(new_jobs: list[dict]) -> None:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
 
-            # Send to admin recipients (no unsubscribe link)
+            # Send to admin recipients (no unsubscribe link, all jobs)
             for recipient in admin_recipients:
                 msg = MIMEMultipart()
                 msg["From"] = sender_email
                 msg["To"] = recipient
                 msg["Subject"] = subject
-                msg.attach(MIMEText(build_html(), "html"))
+                msg.attach(MIMEText(build_html(new_jobs), "html"))
                 server.send_message(msg)
 
-            # Send to DB subscribers (with unsubscribe link)
+            # Send to DB subscribers (with unsubscribe link, filtered by preference)
+            sent_count = 0
             for sub in db_subscribers:
                 # Skip if already in admin list
                 if sub["email"] in admin_recipients:
+                    continue
+                filtered = filter_jobs_by_preference(new_jobs, sub.get("preference", "both"))
+                if not filtered:
+                    logger.info("Skipping %s — no jobs match preference '%s'", sub["email"], sub.get("preference"))
                     continue
                 unsubscribe_url = (
                     f"{app_url}/unsubscribe?token={sub['unsubscribe_token']}"
                     if app_url
                     else None
                 )
+                sub_count = len(filtered)
+                sub_subject = f"\U0001f393 {sub_count} New Research Park Job{'s' if sub_count > 1 else ''} Found!"
                 msg = MIMEMultipart()
                 msg["From"] = sender_email
                 msg["To"] = sub["email"]
-                msg["Subject"] = subject
-                msg.attach(MIMEText(build_html(unsubscribe_url), "html"))
+                msg["Subject"] = sub_subject
+                msg.attach(MIMEText(build_html(filtered, unsubscribe_url), "html"))
                 server.send_message(msg)
+                sent_count += 1
 
-        total = len(admin_recipients) + len(db_subscribers)
+        total = len(admin_recipients) + sent_count
         logger.info("Email notification sent to %d recipient(s)", total)
     except Exception as e:
         logger.error("Failed to send email: %s", e)

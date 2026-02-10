@@ -98,6 +98,23 @@
                     </p>
                     <input type="email" id="emailInput" placeholder="your@email.com"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#13294b]">
+                    <div class="mt-3 text-left">
+                        <p class="text-xs text-gray-500 mb-2 font-medium">Notify me about:</p>
+                        <div class="flex gap-2">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="preference" value="both" class="hidden peer" checked>
+                                <div class="text-center text-xs py-1.5 px-2 rounded-md border border-gray-300 peer-checked:bg-[#13294b] peer-checked:text-white peer-checked:border-[#13294b] transition">Both</div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="preference" value="internship" class="hidden peer">
+                                <div class="text-center text-xs py-1.5 px-2 rounded-md border border-gray-300 peer-checked:bg-[#13294b] peer-checked:text-white peer-checked:border-[#13294b] transition">Internships</div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="preference" value="fulltime" class="hidden peer">
+                                <div class="text-center text-xs py-1.5 px-2 rounded-md border border-gray-300 peer-checked:bg-[#13294b] peer-checked:text-white peer-checked:border-[#13294b] transition">Full-Time</div>
+                            </label>
+                        </div>
+                    </div>
                     <p id="subscribeMsg" class="text-xs mt-2 hidden"></p>
                 </div>
                 <div class="items-center px-4 py-3">
@@ -141,10 +158,11 @@
             btn.textContent = 'Subscribing...';
 
             try {
+                const preference = document.querySelector('input[name="preference"]:checked').value;
                 const response = await fetch('/api/subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email }),
+                    body: JSON.stringify({ email: email, preference: preference }),
                 });
                 const data = await response.json();
 

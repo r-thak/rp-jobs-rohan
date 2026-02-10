@@ -41,12 +41,18 @@ def init_db() -> None:
                     active BOOLEAN DEFAULT TRUE
                 )
             """)
+            cur.execute("""
+                ALTER TABLE subscribers
+                ADD COLUMN IF NOT EXISTS preference TEXT DEFAULT 'both'
+            """)
         conn.commit()
     logger.info("Database initialized")
 
 
-def add_subscriber(email: str) -> dict:
+def add_subscriber(email: str, preference: str = "both") -> dict:
     """Insert subscriber with generated UUID token. Return {success, message}."""
+    if preference not in ("internship", "fulltime", "both"):
+        preference = "both"
     token = str(uuid.uuid4())
     try:
         with get_connection() as conn:
@@ -61,13 +67,13 @@ def add_subscriber(email: str) -> dict:
                         return {"success": True, "message": "Already subscribed!"}
                     # Reactivate
                     cur.execute(
-                        "UPDATE subscribers SET active = TRUE, unsubscribe_token = %s WHERE email = %s",
-                        (token, email),
+                        "UPDATE subscribers SET active = TRUE, unsubscribe_token = %s, preference = %s WHERE email = %s",
+                        (token, preference, email),
                     )
                 else:
                     cur.execute(
-                        "INSERT INTO subscribers (email, unsubscribe_token) VALUES (%s, %s)",
-                        (email, token),
+                        "INSERT INTO subscribers (email, unsubscribe_token, preference) VALUES (%s, %s, %s)",
+                        (email, token, preference),
                     )
             conn.commit()
         return {"success": True, "message": "Successfully subscribed!", "token": token}
@@ -94,12 +100,12 @@ def remove_subscriber(token: str) -> bool:
 
 
 def get_active_subscribers() -> list[dict]:
-    """Return list of {email, unsubscribe_token} where active=TRUE."""
+    """Return list of {email, unsubscribe_token, preference} where active=TRUE."""
     try:
         with get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT email, unsubscribe_token FROM subscribers WHERE active = TRUE"
+                    "SELECT email, unsubscribe_token, COALESCE(preference, 'both') AS preference FROM subscribers WHERE active = TRUE"
                 )
                 return [dict(row) for row in cur.fetchall()]
     except Exception as e:

@@ -9,13 +9,17 @@
         tailwind.config = { darkMode: 'class' };
         // Apply theme before paint to prevent flash
         (function() {
-            const saved = localStorage.getItem('theme');
+            var saved = localStorage.getItem('theme');
             if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
             }
         })();
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        /* When flairs are visible, enforce consistent row height across all rows */
+        .flairs-active .pos-content { min-height: 4.5rem; }
+    </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -44,14 +48,14 @@
                 <button onclick="filterJobs('fulltime')" id="filter-fulltime" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Full-Time
                 </button>
-                <button onclick="toggleFlairs()" id="flair-toggle" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
+                <button onclick="toggleFlairs()" id="flair-toggle" data-active="true" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-[#13294b] dark:bg-blue-600 text-white">
                     <i class="fas fa-tags mr-1"></i> View Flairs
                 </button>
-                <button onclick="cycleTheme()" id="theme-toggle" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600" title="Toggle theme">
-                    <i class="fas fa-circle-half-stroke"></i>
+                <button onclick="toggleTheme()" id="theme-toggle" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600" title="Toggle theme">
+                    <i class="fas fa-sun"></i>
                 </button>
             </div>
-            <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+            <div id="job-table-wrap" class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden flairs-active">
                 <table class="w-full">
                     <thead>
                         <tr>
@@ -71,43 +75,45 @@
                     </thead>
                     <tbody>
                         {% for job in jobs %}
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition job-row h-14" data-type="{{ 'internship' if 'intern' in job.position|lower else 'fulltime' }}">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition job-row" data-type="{{ 'internship' if 'intern' in job.position|lower else 'fulltime' }}">
                             <td class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 text-sm align-top">
                                 <span class="text-gray-900 dark:text-gray-100 font-medium">{{ job.company }}</span>
                             </td>
                             <td class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 text-sm align-top">
-                                <span class="text-gray-900 dark:text-gray-100">{{ job.position }}</span>
-                                {% if job.is_new %}
-                                <span class="ml-1.5 text-yellow-500 font-bold text-xs">NEW</span>
-                                {% endif %}
-                                {% if job.badges %}
-                                <div class="flair-row hidden">
-                                    <div class="flex flex-wrap gap-1 mt-1 text-[10px]">
-                                        {% if job.badges.min_gpa %}
-                                        <span class="px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-semibold">GPA {{ job.badges.min_gpa }}+</span>
+                                <div class="pos-content">
+                                    <span class="text-gray-900 dark:text-gray-100">{{ job.position }}</span>
+                                    {% if job.is_new %}
+                                    <span class="ml-1.5 text-yellow-500 font-bold text-xs">NEW</span>
+                                    {% endif %}
+                                    {% if job.badges %}
+                                    <div class="flair-row">
+                                        <div class="flex flex-wrap gap-1 mt-1 text-[10px]">
+                                            {% if job.badges.min_gpa %}
+                                            <span class="px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-semibold">GPA {{ job.badges.min_gpa }}+</span>
+                                            {% endif %}
+                                            {% if job.badges.graduation_window %}
+                                            <span class="px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300 font-semibold">Grad {{ job.badges.graduation_window }}</span>
+                                            {% endif %}
+                                            {% if job.badges.cpt_opt_required %}
+                                            <span class="px-1.5 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/40 text-pink-800 dark:text-pink-300 font-semibold">CPT/OPT Required</span>
+                                            {% endif %}
+                                            {% if job.badges.work_mode %}
+                                            <span class="px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 font-semibold">{{ job.badges.work_mode | capitalize }}</span>
+                                            {% endif %}
+                                            {% if job.badges.duration %}
+                                            <span class="px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-semibold">{{ job.badges.duration }}</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if job.badges.majors %}
+                                        <div class="flex flex-wrap gap-1 mt-1 text-[10px]">
+                                            {% for major in job.badges.majors %}
+                                            <span class="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold">{{ major }}</span>
+                                            {% endfor %}
+                                        </div>
                                         {% endif %}
-                                        {% if job.badges.graduation_window %}
-                                        <span class="px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300 font-semibold">Grad {{ job.badges.graduation_window }}</span>
-                                        {% endif %}
-                                        {% if job.badges.cpt_opt_required %}
-                                        <span class="px-1.5 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/40 text-pink-800 dark:text-pink-300 font-semibold">CPT/OPT Required</span>
-                                        {% endif %}
-                                        {% if job.badges.work_mode %}
-                                        <span class="px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 font-semibold">{{ job.badges.work_mode | capitalize }}</span>
-                                        {% endif %}
-                                        {% if job.badges.duration %}
-                                        <span class="px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-semibold">{{ job.badges.duration }}</span>
-                                        {% endif %}
-                                    </div>
-                                    {% if job.badges.majors %}
-                                    <div class="flex flex-wrap gap-1 mt-1 text-[10px]">
-                                        {% for major in job.badges.majors %}
-                                        <span class="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold">{{ major }}</span>
-                                        {% endfor %}
                                     </div>
                                     {% endif %}
                                 </div>
-                                {% endif %}
                             </td>
                             <td class="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 text-sm whitespace-nowrap align-top">
                                 <span class="text-gray-900 dark:text-gray-100">{{ job.formatted_date }}</span>
@@ -174,55 +180,36 @@
     </div>
 
     <script>
-        // Theme: system (default) -> light -> dark -> system ...
-        function getEffectiveTheme() {
-            const saved = localStorage.getItem('theme');
-            if (saved === 'dark') return 'dark';
-            if (saved === 'light') return 'light';
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-
+        // Theme: defaults to system on first visit, then toggles light <-> dark
         function applyTheme() {
-            const effective = getEffectiveTheme();
-            document.documentElement.classList.toggle('dark', effective === 'dark');
-            const btn = document.getElementById('theme-toggle');
             const saved = localStorage.getItem('theme');
-            if (!saved) {
-                btn.innerHTML = '<i class="fas fa-circle-half-stroke"></i>';
-                btn.title = 'Theme: System';
-            } else if (saved === 'light') {
-                btn.innerHTML = '<i class="fas fa-sun"></i>';
-                btn.title = 'Theme: Light';
-            } else {
-                btn.innerHTML = '<i class="fas fa-moon"></i>';
-                btn.title = 'Theme: Dark';
-            }
+            const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', isDark);
+            const btn = document.getElementById('theme-toggle');
+            btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
         }
 
-        function cycleTheme() {
-            const saved = localStorage.getItem('theme');
-            if (!saved) {
-                localStorage.setItem('theme', 'light');
-            } else if (saved === 'light') {
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.removeItem('theme');
-            }
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
             applyTheme();
         }
 
-        // Listen for system theme changes when in system mode
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
             if (!localStorage.getItem('theme')) applyTheme();
         });
 
         applyTheme();
 
+        // Flairs: shown by default
         function toggleFlairs() {
             const btn = document.getElementById('flair-toggle');
+            const wrap = document.getElementById('job-table-wrap');
             const flairs = document.querySelectorAll('.flair-row');
             const showing = btn.dataset.active === 'true';
             flairs.forEach(el => el.classList.toggle('hidden', showing));
+            wrap.classList.toggle('flairs-active', !showing);
             btn.dataset.active = showing ? 'false' : 'true';
             const isDark = document.documentElement.classList.contains('dark');
             if (showing) {

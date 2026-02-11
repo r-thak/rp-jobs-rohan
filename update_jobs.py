@@ -629,7 +629,7 @@ def main() -> None:
         for job in new_jobs:
             logger.info("  - %s - %s", job["company"], job["position"])
 
-        # send_email(new_jobs)  # Temporarily disabled to fix stale jobs.json
+        send_email(new_jobs)
 
         # Strip temp field before writing
         serializable_new = [
